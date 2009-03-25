@@ -1,0 +1,5 @@
+This is a hacked version of v1.2 of Neil van Dyke's csv.plt package,
+making it compatible with PLT 3.99.
+
+-- Dave Gurnell, 2008-02-05
+

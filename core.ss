@@ -8,22 +8,6 @@
          (planet untyped/snooze:2/check/check)
          (planet untyped/mirrors:1))
 
-; Contracts --------------------------------------
-
-(define (parse-type-criteria/c [return-type/c any/c])
-  (-> (or/c string? false/c) return-type/c))
-
-(define (parse-type/c [return-type/c any/c])
-  (and/c parse-type? 
-         (->* ((or/c string? false/c))
-              (integer? csv-column?)
-              (values return-type/c (listof check-result?)))))
-
-(define key-generator/c 
-  (-> csv-line/data?
-      (listof (cons/c integer? csv-column?))
-      (values (or/c string? false/c)
-              (listof csv-column?))))
 
 ; Annotations ------------------------------------
 
@@ -241,17 +225,27 @@
                                    "This information is not present in the current line"))])))
 
 
+; Contracts --------------------------------------
+
+(define (parse-type-criteria/c [return-type/c any/c])
+  (-> (or/c string? false/c) return-type/c))
+
+(define (parse-type/c [return-type/c any/c])
+  (or/c parse-type? 
+        (->* ((or/c string? false/c))
+             (integer? csv-column?)
+             (values return-type/c (listof check-result?)))))
+
+(define key-generator/c 
+  (-> csv-line/data?
+      (listof (cons/c integer? csv-column?))
+      (values (or/c string? false/c)
+              (listof csv-column?))))
+
 
 ; Provide statements -----------------------------
 
-(provide/contract
- [parse-type-criteria/c (->* () (contract?) contract?)]
- [parse-type/c          (->* () (contract?) contract?)]
- [key-generator/c       contract?])
-
 (provide ann:csv-columns ann:csv-unchanged parse-fail)
-
-
 
 ; Structs
 (provide/contract
@@ -319,3 +313,9 @@
  [make-key-generator             (->* ((listof csv-column?))
                                       (#:include-false-values? boolean?)                                         
                                       key-generator/c)])
+
+; contract types
+(provide/contract
+ [parse-type-criteria/c (->* () (contract?) contract?)]
+ [parse-type/c          (->* () (contract?) contract?)]
+ [key-generator/c       contract?])
