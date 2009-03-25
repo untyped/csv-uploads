@@ -231,11 +231,11 @@
           (except-out (all-from-out "generic-parse-types.ss") opt-check))
 
 (provide/contract 
- [parse-csv                (->* (bytes?                                   ; raw bytes
-                                 (listof csv-column?)                     ; type specification
-                                 (-> csv-line? csv-line?))                ; line-validator and action generator
-                                ((listof key-generator/c)                 ; duplication keys
-                                 #:rest-type (or/c parse-type/c false/c)) ; parse-type for all remaining columns
+ [parse-csv                (->* (bytes?                                     ; raw bytes
+                                 (listof csv-column?)                       ; type specification
+                                 (-> csv-line? csv-line?))                  ; line-validator and action generator
+                                ((listof key-generator/c)                   ; duplication keys
+                                 #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
                                 (listof (or/c csv-line/action? csv-line/errors?)))]
  [run-csv-actions          (-> string?                                           ; message
                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
