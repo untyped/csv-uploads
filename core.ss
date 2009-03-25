@@ -15,7 +15,9 @@
 
 (define (parse-type/c [return-type/c any/c])
   (and/c parse-type? 
-         (-> (or/c string? false/c) (values return-type/c (listof check-result?)))))
+         (->* ((or/c string? false/c))
+              (integer? csv-column?)
+              (values return-type/c (listof check-result?)))))
 
 (define key-generator/c 
   (-> csv-line/data?

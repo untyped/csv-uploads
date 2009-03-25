@@ -294,69 +294,45 @@
 
 (provide/contract  
  ; string 
- [parse-type:string                 (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c string? void?) list?))]
- [parse-type:string+false           (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c string? false/c void?) list?))]
+ [parse-type:string                 (parse-type/c (or/c string? void?))]
+ [parse-type:string+false           (parse-type/c (or/c string? false/c void?))]
  ; symbol
- [parse-type:symbol                 (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c symbol? false/c void?) list?))]
- [parse-type:symbol+false           (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c symbol? false/c void?) list?))]
+ [parse-type:symbol                 (parse-type/c (or/c symbol? false/c void?))]
+ [parse-type:symbol+false           (parse-type/c (or/c symbol? false/c void?))]
  ; symbol
- [parse-type:symbol-ci              (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c symbol? false/c void?) list?))]
- [parse-type:symbol-ci+false        (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c symbol? false/c void?) list?))]
+ [parse-type:symbol-ci              (parse-type/c (or/c symbol? false/c void?))]
+ [parse-type:symbol-ci+false        (parse-type/c (or/c symbol? false/c void?))]
  ; numbers
- [parse-type:number                 (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c number? void?) list?))]
- [parse-type:number+false           (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c number? false/c void?) list?))]
+ [parse-type:number                 (parse-type/c (or/c number? void?))]
+ [parse-type:number+false           (parse-type/c (or/c number? false/c void?))]
  ; integer
- [parse-type:integer                (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c integer? void?) list?))]
- [parse-type:integer+false          (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c integer? false/c void?) list?))]
+ [parse-type:integer                (parse-type/c (or/c integer? void?))]
+ [parse-type:integer+false          (parse-type/c (or/c integer? false/c void?))]
  ; real
- [parse-type:real                   (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c real? void?) list?))]
- [parse-type:real+false             (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c real? false/c void?) list?))]
+ [parse-type:real                   (parse-type/c (or/c real? void?))]
+ [parse-type:real+false             (parse-type/c (or/c real? false/c void?))]
  ; compounds
- [parse-type:symbol+integer         (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c symbol? integer? void?) list?))]
- [parse-type:symbol-ci+integer      (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c symbol? integer? void?) list?))]
+ [parse-type:symbol+integer         (parse-type/c (or/c symbol? integer? void?))]
+ [parse-type:symbol-ci+integer      (parse-type/c (or/c symbol? integer? void?))]
  ; boolean
- [parse-type:boolean                (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c boolean? void?) list?))]
- [parse-type:boolean+unspecified    (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c boolean? void?) list?))]
+ [parse-type:boolean                (parse-type/c (or/c boolean? void?))]
+ [parse-type:boolean+unspecified    (parse-type/c (or/c boolean? void?))]
  
  ; boolean
- [parse-type:md5                    (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c string? void?) list?))]
- [parse-type:md5+false              (-> (or/c string? false/c) integer? csv-column? 
-                                        (values (or/c string? false/c void?) list?))]
+ [parse-type:md5                    (parse-type/c (or/c string? void?))]
+ [parse-type:md5+false              (parse-type/c (or/c string? false/c void?))]
  ; lists of symbols
  [make-parse-type/symbols-ci        (-> (listof symbol?) 
-                                        (-> (or/c string? false/c) integer? csv-column?
-                                            (values (or/c boolean? symbol? void?) list?)))]
+                                        (parse-type/c (or/c boolean? symbol? void?)))]
  [make-parse-type/symbols-ci+false  (-> (listof symbol?) 
-                                        (-> (or/c string? false/c) integer? csv-column?
-                                            (values (or/c boolean? symbol? void?) list?)))]
+                                        (parse-type/c (or/c boolean? symbol? void?)))]
  ; arbitrary pairs
  [make-parse-type/pairs             (-> list?
-                                        (-> (or/c string? false/c) integer? csv-column?
-                                            (values (or/c boolean? symbol? void?) list?)))]
+                                        (parse-type/c (or/c boolean? symbol? void?)))]
  [make-parse-type/pairs-ci          (-> list?
-                                        (-> (or/c string? false/c) integer? csv-column?
-                                            (values (or/c boolean? symbol? void?) list?)))]
+                                        (parse-type/c (or/c boolean? symbol? void?)))]
  ; enumerations
  [make-parse-type/enum-value        (-> enum? 
-                                        (-> (or/c string? false/c) integer? csv-column?
-                                            (values (or/c boolean? symbol? void?) list?)))]
+                                        (parse-type/c (or/c boolean? symbol? void?)))]
  [make-parse-type/enum-pretty-value (-> enum? 
-                                        (-> (or/c string? false/c) integer? csv-column?
-                                            (values (or/c boolean? symbol? void?) list?)))])
+                                        (parse-type/c (or/c boolean? symbol? void?)))])
