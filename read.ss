@@ -17,17 +17,12 @@
   ;   - bytes->string/utf-8 failed (typically due to a binary or non-UTF-8 file);
   ;   - CSV line read failed (typically due to mismatched quotes).
   (with-handlers ([exn? (lambda (exn)
-                          (error "Could not read CSV file. Reason: ~s" (exn-message exn)))])
+                          (error (format "The file you uploaded could not be opened. ~a" (exn-message exn))))])
     
     ; string
     (define str
       ; bytes->string/utf-8 throws an exception if the file isn't UTF-8:
-      (with-handlers ([exn:fail:contract? 
-                       (lambda (exn)
-                         (raise-exn exn:fail:contract
-                           (string-append "The file was not plain (ASCII or UTF-8) text. "
-                                          "If you are uploading data from Excel, make sure you selected a CSV "
-                                          "version and not an XLS file.")))])
+      (with-handlers ([exn:fail:contract? (lambda _ (error "The file was not plain (ASCII or UTF-8) text. Make sure you selected a plain CSV file rather than an XLS file."))])
         (bytes->string/utf-8 byt)))
     
     ; input-port
@@ -57,10 +52,7 @@
     (let loop ([line-number 1] [accum null])
       (let ([original (read-line original-input 'any)]
             [fields   (with-handlers ([exn? (lambda (exn)
-                                              (raise-exn exn:fail 
-                                                         (format "Error on line ~a: ~s"
-                                                                 line-number
-                                                                 (exn-message exn))))])
+                                              (error (format "There was an error on line ~a: ~s" line-number (exn-message exn))))])
                         (read-fields))])
         (if (or (eof-object? original)
                 (null? fields))
