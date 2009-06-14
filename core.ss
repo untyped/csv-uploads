@@ -6,7 +6,7 @@
          (planet untyped/unlib:3/exn)
          (planet untyped/unlib:3/number)
          (planet untyped/snooze:2/check/check)
-         (planet untyped/mirrors:1))
+         (planet untyped/mirrors:2))
 
 
 ; Annotations ------------------------------------
