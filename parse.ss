@@ -1,10 +1,10 @@
 #lang scheme/base
 
 (require scheme/contract
-         scheme/list
+         (only-in scheme/list flatten)
+         (only-in srfi/1 make-list)
          scheme/match
          scheme/string
-         (only-in srfi/1 make-list)
          (planet untyped/snooze:2/check/check)
          (planet untyped/unlib:3/debug)
          (planet untyped/unlib:3/exn)
