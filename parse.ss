@@ -5,7 +5,7 @@
          (only-in srfi/1 make-list)
          scheme/match
          scheme/string
-         (planet untyped/snooze:2/check/check)
+         (planet untyped/snooze:3)
          (planet untyped/unlib:3/debug)
          (planet untyped/unlib:3/exn)
          (only-in (planet untyped/unlib:3/list) list-ref?)

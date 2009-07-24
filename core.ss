@@ -3,10 +3,10 @@
 (require scheme/contract
          scheme/match
          (only-in srfi/13 string-trim-both)         
+         (planet untyped/mirrors:2)
+         (planet untyped/snooze:3)
          (planet untyped/unlib:3/exn)
-         (planet untyped/unlib:3/number)
-         (planet untyped/snooze:2/check/check)
-         (planet untyped/mirrors:2))
+         (planet untyped/unlib:3/number))
 
 
 ; Annotations ------------------------------------
