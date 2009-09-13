@@ -236,7 +236,7 @@
                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
                                 ((listof key-generator/c)                   ; duplication keys
                                  #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
-                                (listof (or/c csv-line/action? csv-line/errors?)))]
+                                (listof csv-line?))]
  [run-csv-actions          (-> string?                                           ; message
                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
                                (listof boolean?)                                 ; decisions as to whether to act
