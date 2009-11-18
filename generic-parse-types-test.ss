@@ -2,7 +2,7 @@
 
 (require (planet schematics/schemeunit:2/test)
          (planet schematics/schemeunit:2/util)
-         (planet untyped/snooze:2/check/check)
+         (planet untyped/snooze:3)
          (planet untyped/unlib:3/debug)
          (planet untyped/unlib:3/enum)
          "generic-parse-types.ss"

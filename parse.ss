@@ -36,7 +36,7 @@
 ;  (listof csv-column)
 ;  (csv-line/data -> (U csv-line/actions csv-line/errors)
 ;  [(listof key-generator)]
-;  [#:rest-type parse-type?]
+;  [#:rest-type parse-type]
 ; ->
 ;  (listof (U csv-line/action csv-line/error))
 (define (parse-csv file-content
@@ -51,6 +51,17 @@
   ; [1] Read the byte-string file contents into a list of csv-lines
   (define csv-lines
     (read-csv file-content (length type-specification) trim-lines?))
+  
+  (parse-csv/lines csv-lines type-specification raw->data keying-procedures #:rest-type rest-type))
+
+;  (listof csv-line)
+;  (listof csv-column)
+;  (csv-line/data -> (U csv-line/actions csv-line/errors)
+;  [(listof key-generator)]
+;  [#:rest-type parse-type]
+; ->
+;  (listof (U csv-line/action csv-line/error))
+(define (parse-csv/lines csv-lines type-specification raw->data [keying-procedures null] #:rest-type [rest-type #f])
   
   ; [2] type-checking: iterate over all rows, applying the type-check
   ;     against the list of csv-columns
