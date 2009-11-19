@@ -99,6 +99,14 @@
       (check-valid-values parse-type:integer+false (list "123" #f "") (list 123 #f #f))
       (check-invalid-values parse-type:integer+false (list "1.23" "hello" "1n" "1.n3"))) 
     
+    ; TEST: integer (not including false)
+    (test-case "make-parse-type/integer-range"
+      (let ([parse-type:5->10 (make-parse-type/integer-range 5 10)])
+        (check-valid-values   parse-type:5->10 (list "5" "6" "7" "8" "9") (list 5 6 7 8 9))
+        (check-invalid-values parse-type:5->10 (list "1.23" #f "" "hello" "1n" "1.n3" "4" "10")))
+      (check-exn exn:fail? (lambda () (make-parse-type/integer-range 10 5)))
+      (check-exn exn:fail? (lambda () (make-parse-type/integer-range 10 10))))
+    
     ; TEST: real (not including false)
     (test-case "parse-type:real"
       (check-valid-values parse-type:real (list "1.23" "123") (list 1.23 123))
