@@ -101,13 +101,13 @@
        (let-values ([(the-data the-problems)
                      (for/fold ([acc-data      null]
                                 [acc-problems  null])
-                       ([cell    (in-list data)]
-                        [csv-col (in-list csv-columns/rest)]
-                        [index   (in-naturals 1)]) 
-                       (let-values ([(this-data this-problems)
-                                     (csv-col cell index)])
-                         (values (cons this-data acc-data)
-                                 (check-problems this-problems acc-problems))))])
+                               ([cell    (in-list data)]
+                                [csv-col (in-list csv-columns/rest)]
+                                [index   (in-naturals 1)]) 
+                               (let-values ([(this-data this-problems)
+                                             (csv-col cell index)])
+                                 (values (cons this-data acc-data)
+                                         (check-problems this-problems acc-problems))))])
          ; convert to a csv-line/data or csv-line/errors
          (csv-line/raw->csv-line/data csv-line
                                       #:problems (reverse the-problems) #:data (reverse the-data))))]))
@@ -243,6 +243,12 @@
 
 (provide/contract 
  [parse-csv                (->* (bytes?                                     ; raw bytes
+                                 (listof csv-column?)                       ; type specification
+                                 (-> csv-line? csv-line?))                  ; line-validator and action generator
+                                ((listof key-generator/c)                   ; duplication keys
+                                 #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
+                                (listof csv-line?))]
+ [parse-csv/lines          (->* ((listof csv-line/raw?)                     
                                  (listof csv-column?)                       ; type specification
                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
                                 ((listof key-generator/c)                   ; duplication keys
