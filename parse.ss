@@ -172,28 +172,31 @@
 ; string (listof (U csv-line/action csv-line/error)) -> void
 ; actions must achieve by side-effect
 (define (run-csv-actions message csv-lines decisions call-with-transaction-wrapper)
-  (run-csv-actions/epilogue message csv-lines decisions void call-with-transaction-wrapper))
+  (run-csv-actions/prologue+epilogue message csv-lines decisions void void call-with-transaction-wrapper))
 
 ;  string                                        ; commission message, for transaction wrapper
 ;  (listof (U csv-line/action csv-line/error))   ; the lines, either with actions or errors
 ;  (listof boolean)                              ; whether or not to perform an action
-;  ( -> any)                                     ; anything executed after all line actions run
+;  ( -> void)                                    ; anything executed before all line actions run
+;  ( -> void)                                    ; anything executed after all line actions run
 ;  (( -> any) string -> any)                     ; transaction wrapper
 ; ->
 ;  void
 ; actions must achieve by side-effect
-(define (run-csv-actions/epilogue message csv-lines decisions epilogue call-with-transaction-wrapper)
+(define (run-csv-actions/prologue+epilogue message csv-lines decisions prologue epilogue call-with-transaction-wrapper)
   (let ([csv-line-count (length csv-lines)]
         [decision-count (length decisions)])
     (if (= csv-line-count decision-count)
         (begin (call-with-transaction-wrapper
                 ; commit changes                                                
                 (lambda ()
+                  (prologue)
                   (for ([csv-action (in-list csv-lines)]
                         [act?       (in-list decisions)])
                     (when (csv-line/action? csv-action)
                       ((csv-line/action-action csv-action) act?)))
-                  (epilogue))                                                
+                  (epilogue)
+                  (void))
                 message)
                (void))
         (raise-exn exn:fail:contract "CSV lines and decision-list must be same length"))))
@@ -231,20 +234,24 @@
           (except-out (all-from-out "generic-parse-types.ss") opt-check))
 
 (provide/contract 
- [parse-csv                (->* (bytes?                                     ; raw bytes
+ [parse-csv
+  (->* (bytes?                                     ; raw bytes
                                  (listof csv-column?)                       ; type specification
                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
                                 ((listof key-generator/c)                   ; duplication keys
                                  #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
                                 (listof csv-line?))]
- [run-csv-actions          (-> string?                                           ; message
+ [run-csv-actions
+  (-> string?                                           ; message
                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
                                (listof boolean?)                                 ; decisions as to whether to act
                                (-> (-> any) string? any)                         ; transaction wrapper
                                void?)]
- [run-csv-actions/epilogue (-> string?                                           ; message
+ [run-csv-actions/prologue+epilogue
+  (-> string?                                           ; message
                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
                                (listof boolean?)                                 ; decisions as to whether to act
+                               (-> void?)                                        ; thunk to do initial database changes
                                (-> void?)                                        ; thunk to do final database changes
                                (-> (-> any) string? any)                         ; transaction wrapper 
                                void?)])                              
