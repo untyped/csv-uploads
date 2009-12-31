@@ -22,8 +22,9 @@
     ; string
     (define str
       ; bytes->string/utf-8 throws an exception if the file isn't UTF-8:
-      (with-handlers ([exn:fail:contract? (lambda _ (error "The file was not plain (ASCII or UTF-8) text. Make sure you selected a plain CSV file rather than an XLS file."))])
-        (bytes->string/utf-8 byt)))
+      (with-handlers ([exn:fail? (lambda _ (error "The file was not plain (ASCII, UTF-8 or Latin-1) text. Make sure you selected a plain CSV file rather than an XLS file."))])
+        (with-handlers ([exn:fail? (lambda _ (bytes->string/latin-1 byt))])
+          (bytes->string/utf-8 byt))))
     
     ; input-port
     (define original-input 
