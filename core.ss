@@ -36,9 +36,8 @@
 (define-struct (csv-line/data csv-line) (data) #:transparent)
 
 ; (struct ... (listof string))
-; no data included, just errors
 ; and csv-line with failures or errors is converted into a csv-line/errors
-(define-struct (csv-line/errors csv-line) () #:transparent)
+(define-struct (csv-line/errors csv-line/raw) () #:transparent)
 
 ; (struct ... action)
 (define-struct (csv-line/action csv-line/data) (action) #:transparent)
@@ -82,6 +81,18 @@
 
 ; Parse types ------------------------------------
 
+; natural csv-column parse-type string -> string
+(define (generic-parse-failure-message index column parse-type raw-data)
+  (format "Column ~a (~a): Expected ~a; found ~s."
+          index
+          (csv-column-title column)
+          (parse-type-description parse-type)
+          (if (equal? raw-data "") '<blank> raw-data)))
+
+; natural csv-column parse-type string -> string
+(define default-parse-failure-message
+  (make-parameter generic-parse-failure-message))
+
 ; DEFINING A PARSE TYPE:
 ; Parse-type is a wrapper struct for a parsing procedure, stored in parse-type-criteria.
 ; The "criteria" is a procedure taking a raw value (U string #f) and either:
@@ -111,11 +122,7 @@
             (lambda (exn)
               (values (void)
                       (check/annotate ([ann:csv-columns (list column)])
-                        (check-fail (format "Column ~a (~a): Expected ~a; found ~s."
-                                            index
-                                            (csv-column-title column)
-                                            (parse-type-description pt)
-                                            (if (equal? trimmed-raw "") '<blank> trimmed-raw))))))])
+                        (check-fail ((default-parse-failure-message) index column pt trimmed-raw)))))])
         (values ((parse-type-criteria pt) trimmed-raw) null)))))
 
 ; -> exn:fail:csv:parse-type
@@ -164,15 +171,15 @@
 ;  (U (listof scheme-datum) #f)
 ; ->
 ;  (U csv-line/data csv-line/errors)
-(define (copy-csv-line-internal csv-line data-accessor problems data)
+(define (copy-csv-line-internal csv-line data-accessor problems original-data)
   (let* ([all-problems (check-problems (csv-line-problems csv-line) problems)]
          [all-errors   (check-errors all-problems)]
          [line-number  (csv-line-number csv-line)]
          [text         (csv-line-text csv-line)]
-         [data         (if data data (data-accessor csv-line))])
+         [data         (if original-data original-data (data-accessor csv-line))])
     (if (null? all-errors)
-        (make-csv-line/data line-number text all-problems data)
-        (make-csv-line/errors line-number text all-problems))))
+        (make-csv-line/data   line-number text all-problems data)
+        (make-csv-line/errors line-number text all-problems (data-accessor csv-line)))))
 
 ;  csv-line/data
 ;  action
@@ -204,25 +211,25 @@
              (for/fold ([selected-columns  null] ; (listof csv-column)
                         [all-values-false? #t]   ; boolean, #t if all values seen so far are #f
                         [value-string      ""])  ; string
-               ([index+col (in-list all-columns/indices)])               
-               (let* ([index     (car index+col)] ; integer
-                      [csv-col   (cdr index+col)]
-                      [selected? (and (member csv-col csv-columns) #t)]
-                      [the-data  (and selected? (list-ref data-list (sub1 index)))])
-                 (if selected?
-                     (values (cons csv-col selected-columns)
-                             (and all-values-false? (not the-data))
-                             (string-append value-string
-                                            (format "Column ~a (~a)=~s; " 
-                                                    index (csv-column-title csv-col) the-data)))
-                     (values selected-columns all-values-false? value-string))))])                              
+                       ([index+col (in-list all-columns/indices)])               
+                       (let* ([index     (car index+col)] ; integer
+                              [csv-col   (cdr index+col)]
+                              [selected? (and (member csv-col csv-columns) #t)]
+                              [the-data  (and selected? (list-ref data-list (sub1 index)))])
+                         (if selected?
+                             (values (cons csv-col selected-columns)
+                                     (and all-values-false? (not the-data))
+                                     (string-append value-string
+                                                    (format "Column ~a (~a)=~s; " 
+                                                            index (csv-column-title csv-col) the-data)))
+                             (values selected-columns all-values-false? value-string))))])                              
          (values (and (or include-false-values? (not all-values-false?)) value-string)
                  (reverse columns)))] ; reverse columns to get correct ordering
       [_ (raise-exn exn:fail:csv
-                    (string-append (format "CSV lines must contain at least:~n")
-                                   (map (lambda (col) (format " - ~s~n" (csv-column-title col)))
-                                        csv-columns)
-                                   "This information is not present in the current line"))])))
+           (string-append (format "CSV lines must contain at least:~n")
+                          (map (lambda (col) (format " - ~s~n" (csv-column-title col)))
+                               csv-columns)
+                          "This information is not present in the current line"))])))
 
 
 ; Contracts --------------------------------------
@@ -263,7 +270,8 @@
                                            [data     list?])] 
  [struct (csv-line/errors csv-line)       ([number   natural?]
                                            [text     string?]
-                                           [problems (listof check-problem?)])] 
+                                           [problems (listof check-problem?)]
+                                           [data     list?])] 
  [struct (csv-line/action csv-line/data)  ([number   natural?]
                                            [text     string?]
                                            [problems (listof check-problem?)]
@@ -316,6 +324,7 @@
 
 ; contract types
 (provide/contract
- [parse-type-criteria/c (->* () (contract?) contract?)]
- [parse-type/c          (->* () (contract?) contract?)]
- [key-generator/c       contract?])
+ [parse-type-criteria/c         (->* () (contract?) contract?)]
+ [parse-type/c                  (->* () (contract?) contract?)]
+ [key-generator/c               contract?]
+ [default-parse-failure-message (parameter/c (-> integer? csv-column? parse-type/c string? string?))])
