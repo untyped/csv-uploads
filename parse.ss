@@ -113,6 +113,16 @@
                                       #:problems (reverse the-problems) #:data (reverse the-data))))]))
 
 
+
+; (listof csv-column) any (listof integer) -> string
+(define (generic-duplicate-message affected-columns this-key duplicate-lines)
+  (format "DUPLICATION: The key {~a} is present in several lines: ~a" this-key 
+          (string-join (map number->string duplicate-lines) ", ")))
+
+; (listof csv-column) any (listof integer) -> string
+(define default-duplicate-message
+  (make-parameter generic-duplicate-message))
+
 ; compiles a list of line numbers in which a unique key is used
 ; (list should contain only a single number, if used correctly)
 
@@ -169,8 +179,7 @@
                (let* ([duplicate-lines (hash-ref hash:duplicates this-key)])
                  (opt-check (list-ref? duplicate-lines 1) ; if there's more than one element...
                    (check-fail 
-                    (format "DUPLICATION: The key {~a} is present in several lines: ~a" this-key 
-                            (string-join (reverse (map number->string duplicate-lines)) " ")))))))))))))
+                    ((default-duplicate-message) affected-columns this-key (reverse duplicate-lines)))))))))))))
   
   ; check-duplicates, then apply custom checking procedure to result
   (for/list ([csv-line (in-list csv-lines)])
@@ -242,26 +251,27 @@
           (except-out (all-from-out "generic-parse-types.ss") opt-check))
 
 (provide/contract 
- [parse-csv                (->* (bytes?                                     ; raw bytes
-                                 (listof csv-column?)                       ; type specification
-                                 (-> csv-line? csv-line?))                  ; line-validator and action generator
-                                ((listof key-generator/c)                   ; duplication keys
-                                 #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
-                                (listof csv-line?))]
- [parse-csv/lines          (->* ((listof csv-line/raw?)                     
-                                 (listof csv-column?)                       ; type specification
-                                 (-> csv-line? csv-line?))                  ; line-validator and action generator
-                                ((listof key-generator/c)                   ; duplication keys
-                                 #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
-                                (listof csv-line?))]
- [run-csv-actions          (-> string?                                           ; message
-                               (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
-                               (listof boolean?)                                 ; decisions as to whether to act
-                               (-> (-> any) string? any)                         ; transaction wrapper
-                               void?)]
- [run-csv-actions/epilogue (-> string?                                           ; message
-                               (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
-                               (listof boolean?)                                 ; decisions as to whether to act
-                               (-> void?)                                        ; thunk to do final database changes
-                               (-> (-> any) string? any)                         ; transaction wrapper 
-                               void?)])                              
+ [default-duplicate-message (parameter/c (-> (listof csv-column?) any/c (listof integer?) string?))]
+ [parse-csv                 (->* (bytes?                                     ; raw bytes
+                                  (listof csv-column?)                       ; type specification
+                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
+                                 ((listof key-generator/c)                   ; duplication keys
+                                  #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
+                                 (listof csv-line?))]
+ [parse-csv/lines           (->* ((listof csv-line/raw?)                     
+                                  (listof csv-column?)                       ; type specification
+                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
+                                 ((listof key-generator/c)                   ; duplication keys
+                                  #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
+                                 (listof csv-line?))]
+ [run-csv-actions           (-> string?                                           ; message
+                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
+                                (listof boolean?)                                 ; decisions as to whether to act
+                                (-> (-> any) string? any)                         ; transaction wrapper
+                                void?)]
+ [run-csv-actions/epilogue  (-> string?                                           ; message
+                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
+                                (listof boolean?)                                 ; decisions as to whether to act
+                                (-> void?)                                        ; thunk to do final database changes
+                                (-> (-> any) string? any)                         ; transaction wrapper 
+                                void?)])                              
