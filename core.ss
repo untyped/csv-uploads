@@ -263,7 +263,7 @@
  [struct (csv-line/raw csv-line)          ([number   natural?]
                                            [text     string?]
                                            [problems (listof check-problem?)]
-                                           [data     (listof string?)])] 
+                                           [data     list?])] 
  [struct (csv-line/data csv-line)         ([number   natural?]
                                            [text     string?]
                                            [problems (listof check-problem?)]
