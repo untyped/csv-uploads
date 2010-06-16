@@ -8,7 +8,7 @@
          "generic-parse-types-test.ss")
 
 ; test-suite
-(define all-csv-lib-tests
+(define all-csv-uploads-tests
   (test-suite "CSV library tests"
     db-cache-tests    
     read-tests
@@ -17,4 +17,4 @@
 
 ; Provide statements -----------------------------
 
-(provide all-csv-lib-tests)
+(provide all-csv-uploads-tests)
