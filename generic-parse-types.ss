@@ -4,8 +4,7 @@
          scheme/contract
          scheme/string
          (only-in srfi/13 string-trim-both)
-         (planet untyped/snooze:2/annotation)
-         (planet untyped/snooze:2/check/check)
+         (planet untyped/snooze:3)
          (planet untyped/unlib:3/debug)
          (planet untyped/unlib:3/enum)
          (planet untyped/unlib:3/exn)
@@ -143,6 +142,7 @@
                      (if (and raw (not (equal? raw "")))
                          ((parse-type-criteria parse-type:real) raw)
                          #f))))
+
 
 ; Booleans ---------------------------------------
 

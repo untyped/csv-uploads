@@ -10,7 +10,7 @@
 
 ; Procedures -------------------------------------
 
-; bytes integer #:trim-lines? boolean -> (listof csv-line/raw) | exn:fail
+; bytes integer boolean -> (listof csv-line/raw) | exn:fail
 (define (read-csv byt num-fields trim-lines?)
   ; There are a couple of handle-and-reraise blocks below that cover
   ; common problems:

@@ -5,7 +5,7 @@
          (only-in srfi/1 make-list)
          scheme/match
          scheme/string
-         (planet untyped/snooze:2/check/check)
+         (planet untyped/snooze:3)
          (planet untyped/unlib:3/debug)
          (planet untyped/unlib:3/exn)
          (only-in (planet untyped/unlib:3/list) list-ref?)
@@ -36,7 +36,7 @@
 ;  (listof csv-column)
 ;  (csv-line/data -> (U csv-line/actions csv-line/errors)
 ;  [(listof key-generator)]
-;  [#:rest-type parse-type?]
+;  [#:rest-type parse-type]
 ; ->
 ;  (listof (U csv-line/action csv-line/error))
 (define (parse-csv file-content
@@ -51,6 +51,17 @@
   ; [1] Read the byte-string file contents into a list of csv-lines
   (define csv-lines
     (read-csv file-content (length type-specification) trim-lines?))
+  
+  (parse-csv/lines csv-lines type-specification raw->data keying-procedures #:rest-type rest-type))
+
+;  (listof csv-line)
+;  (listof csv-column)
+;  (csv-line/data -> (U csv-line/actions csv-line/errors)
+;  [(listof key-generator)]
+;  [#:rest-type parse-type]
+; ->
+;  (listof (U csv-line/action csv-line/error))
+(define (parse-csv/lines csv-lines type-specification raw->data [keying-procedures null] #:rest-type [rest-type #f])
   
   ; [2] type-checking: iterate over all rows, applying the type-check
   ;     against the list of csv-columns
@@ -90,17 +101,27 @@
        (let-values ([(the-data the-problems)
                      (for/fold ([acc-data      null]
                                 [acc-problems  null])
-                       ([cell    (in-list data)]
-                        [csv-col (in-list csv-columns/rest)]
-                        [index   (in-naturals 1)]) 
-                       (let-values ([(this-data this-problems)
-                                     (csv-col cell index)])
-                         (values (cons this-data acc-data)
-                                 (check-problems this-problems acc-problems))))])
+                               ([cell    (in-list data)]
+                                [csv-col (in-list csv-columns/rest)]
+                                [index   (in-naturals 1)]) 
+                               (let-values ([(this-data this-problems)
+                                             (csv-col cell index)])
+                                 (values (cons this-data acc-data)
+                                         (check-problems this-problems acc-problems))))])
          ; convert to a csv-line/data or csv-line/errors
          (csv-line/raw->csv-line/data csv-line
                                       #:problems (reverse the-problems) #:data (reverse the-data))))]))
 
+
+
+; (listof csv-column) any (listof integer) -> string
+(define (generic-duplicate-message affected-columns this-key duplicate-lines)
+  (format "DUPLICATION: The key {~a} is present in several lines: ~a" this-key 
+          (string-join (map number->string duplicate-lines) ", ")))
+
+; (listof csv-column) any (listof integer) -> string
+(define default-duplicate-message
+  (make-parameter generic-duplicate-message))
 
 ; compiles a list of line numbers in which a unique key is used
 ; (list should contain only a single number, if used correctly)
@@ -158,8 +179,7 @@
                (let* ([duplicate-lines (hash-ref hash:duplicates this-key)])
                  (opt-check (list-ref? duplicate-lines 1) ; if there's more than one element...
                    (check-fail 
-                    (format "DUPLICATION: The key {~a} is present in several lines: ~a" this-key 
-                            (string-join (reverse (map number->string duplicate-lines)) " ")))))))))))))
+                    ((default-duplicate-message) affected-columns this-key (reverse duplicate-lines)))))))))))))
   
   ; check-duplicates, then apply custom checking procedure to result
   (for/list ([csv-line (in-list csv-lines)])
@@ -172,31 +192,28 @@
 ; string (listof (U csv-line/action csv-line/error)) -> void
 ; actions must achieve by side-effect
 (define (run-csv-actions message csv-lines decisions call-with-transaction-wrapper)
-  (run-csv-actions/prologue+epilogue message csv-lines decisions void void call-with-transaction-wrapper))
+  (run-csv-actions/epilogue message csv-lines decisions void call-with-transaction-wrapper))
 
 ;  string                                        ; commission message, for transaction wrapper
 ;  (listof (U csv-line/action csv-line/error))   ; the lines, either with actions or errors
 ;  (listof boolean)                              ; whether or not to perform an action
-;  ( -> void)                                    ; anything executed before all line actions run
-;  ( -> void)                                    ; anything executed after all line actions run
+;  ( -> any)                                     ; anything executed after all line actions run
 ;  (( -> any) string -> any)                     ; transaction wrapper
 ; ->
 ;  void
 ; actions must achieve by side-effect
-(define (run-csv-actions/prologue+epilogue message csv-lines decisions prologue epilogue call-with-transaction-wrapper)
+(define (run-csv-actions/epilogue message csv-lines decisions epilogue call-with-transaction-wrapper)
   (let ([csv-line-count (length csv-lines)]
         [decision-count (length decisions)])
     (if (= csv-line-count decision-count)
         (begin (call-with-transaction-wrapper
                 ; commit changes                                                
                 (lambda ()
-                  (prologue)
                   (for ([csv-action (in-list csv-lines)]
                         [act?       (in-list decisions)])
                     (when (csv-line/action? csv-action)
                       ((csv-line/action-action csv-action) act?)))
-                  (epilogue)
-                  (void))
+                  (epilogue))                                                
                 message)
                (void))
         (raise-exn exn:fail:contract "CSV lines and decision-list must be same length"))))
@@ -234,24 +251,27 @@
           (except-out (all-from-out "generic-parse-types.ss") opt-check))
 
 (provide/contract 
- [parse-csv
-  (->* (bytes?                                     ; raw bytes
-                                 (listof csv-column?)                       ; type specification
-                                 (-> csv-line? csv-line?))                  ; line-validator and action generator
-                                ((listof key-generator/c)                   ; duplication keys
-                                 #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
-                                (listof csv-line?))]
- [run-csv-actions
-  (-> string?                                           ; message
-                               (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
-                               (listof boolean?)                                 ; decisions as to whether to act
-                               (-> (-> any) string? any)                         ; transaction wrapper
-                               void?)]
- [run-csv-actions/prologue+epilogue
-  (-> string?                                           ; message
-                               (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
-                               (listof boolean?)                                 ; decisions as to whether to act
-                               (-> void?)                                        ; thunk to do initial database changes
-                               (-> void?)                                        ; thunk to do final database changes
-                               (-> (-> any) string? any)                         ; transaction wrapper 
-                               void?)])                              
+ [default-duplicate-message (parameter/c (-> (listof csv-column?) any/c (listof integer?) string?))]
+ [parse-csv                 (->* (bytes?                                     ; raw bytes
+                                  (listof csv-column?)                       ; type specification
+                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
+                                 ((listof key-generator/c)                   ; duplication keys
+                                  #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
+                                 (listof csv-line?))]
+ [parse-csv/lines           (->* ((listof csv-line/raw?)                     
+                                  (listof csv-column?)                       ; type specification
+                                  (-> csv-line? csv-line?))                  ; line-validator and action generator
+                                 ((listof key-generator/c)                   ; duplication keys
+                                  #:rest-type (or/c (parse-type/c) false/c)) ; parse-type for all remaining columns
+                                 (listof csv-line?))]
+ [run-csv-actions           (-> string?                                           ; message
+                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
+                                (listof boolean?)                                 ; decisions as to whether to act
+                                (-> (-> any) string? any)                         ; transaction wrapper
+                                void?)]
+ [run-csv-actions/epilogue  (-> string?                                           ; message
+                                (listof (or/c csv-line/action? csv-line/errors?)) ; csv-lines
+                                (listof boolean?)                                 ; decisions as to whether to act
+                                (-> void?)                                        ; thunk to do final database changes
+                                (-> (-> any) string? any)                         ; transaction wrapper 
+                                void?)])                              

@@ -2,7 +2,7 @@
 
 (require (planet schematics/schemeunit:2/test)
          (planet schematics/schemeunit:2/util)
-         (planet untyped/snooze:2/check/check)
+         (planet untyped/snooze:3)
          (planet untyped/unlib:3/debug)
          (planet untyped/unlib:3/enum)
          "generic-parse-types.ss"
@@ -97,7 +97,7 @@
     ; TEST: integer or false
     (test-case "parse-type:integer+false" 
       (check-valid-values parse-type:integer+false (list "123" #f "") (list 123 #f #f))
-      (check-invalid-values parse-type:integer+false (list "1.23" "hello" "1n" "1.n3")))
+      (check-invalid-values parse-type:integer+false (list "1.23" "hello" "1n" "1.n3"))) 
     
     ; TEST: integer (not including false)
     (test-case "make-parse-type/integer-range"
