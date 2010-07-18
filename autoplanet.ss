@@ -9,4 +9,4 @@
 (remove-hard-links)
 (install-local "untyped" "unlib.plt"        3 99 (build-path dev-path "unlib"))
 (install-local "untyped" "mirrors.plt"      2 99 (build-path dev-path "mirrors"))
-(install-local "untyped" "snooze.plt"       2 99 (build-path dev-path "snooze"))
+(install-local "untyped" "snooze.plt"       3 99 (build-path dev-path "snooze"))
