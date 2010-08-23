@@ -1,9 +1,0 @@
-;; THIS FILE IS GENERATED
-(
-("make-csv-reader-maker" "(make-csv-reader-maker reader-spec)" "index.html" "index-make_002dcsv_002dreader_002dmaker-1" "")
-("make-csv-reader" "(make-csv-reader in [reader-spec])" "index.html" "index-make_002dcsv_002dreader-2" "")
-("csv-for-each" "(csv-for-each proc reader-or-in)" "index.html" "index-csv_002dfor_002deach-3" "")
-("csv-map" "(csv-map proc reader-or-in)" "index.html" "index-csv_002dmap-4" "")
-("csv->list" "(csv->list reader-or-in)" "index.html" "index-csv_002d_003elist-5" "")
-("csv->sxml" "(csv->sxml reader-or-in [row-element [col-elements]])" "index.html" "index-csv_002d_003esxml-6" "")
-)

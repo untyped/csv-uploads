@@ -5,7 +5,7 @@
          (planet untyped/unlib:3/list)
          (planet untyped/unlib:3/number)
          (planet untyped/unlib:3/exn)
-         (prefix-in csv: (file "csv.plt-2.0-hacked/csv.ss"))
+         (prefix-in csv: (planet neil/csv:1:6))
          "core.ss")
 
 ; Procedures -------------------------------------
